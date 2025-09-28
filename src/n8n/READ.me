@@ -1,0 +1,18 @@
+---
+Deploy n8n image to NGROK
+---
+1. Install and authenticate your ngrok account
+ngrok config add-authtoken 30YMR2ia6phQ4XdQD73N9PAdFGw_7rwkaGMtMgGtzdt2cdcZX
+
+2. Startup ngrok server before starting n8n image
+ngrok http 5678
+
+It will generate a url
+https://18d5d699c0bd.ngrok-free.app
+
+3. Update docker-yml environment
+- WEBHOOK_TUNNEL_URL=https://df9655c9ca86.ngrok-free.app
+- WEBHOOK_URL=https://df9655c9ca86.ngrok-free.app
+
+
+
