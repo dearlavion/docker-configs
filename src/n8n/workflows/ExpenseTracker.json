@@ -1,0 +1,387 @@
+{
+  "name": "ExpenseTracker",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7bca457c-8e3a-4b73-8908-a7d94812f49b",
+      "name": "Telegram Trigger",
+      "webhookId": "5cceacb8-09b4-4c9a-a8d0-7c1f75b2413a",
+      "credentials": {
+        "telegramApi": {
+          "id": "QhjAuIMRnHE08olp",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.message.text;\nconst parts = text.split(',');\n\nif (parts.length !== 3) {\n  throw new Error(\"Invalid input. Format must be: source,description,amount\");\n}\n\nconst unixDate = $json.message.date;\nconst jsDate = new Date(unixDate * 1000); // Telegram date is in seconds\nconst formattedDate = jsDate.toISOString().split(\"T\")[0];\n\nreturn [{\n  source: parts[0].trim(),\n  description: parts[1].trim(),\n  amount: parseFloat(parts[2].trim()),\n  date: formattedDate,\n  timestamp: jsDate.toISOString(),\n  telegram_user_id: $json.message.from.id,\n  username: `${$json.message.from.first_name} ${$json.message.from.last_name || ''}`.trim()\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a8dfa3f3-9e4a-49af-b8d1-c59bba4cc89a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1tEAVuFkmp9zJAoJBaoRts_a_Da1gLzuLrlZv75JLLD8",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        352,
+        -96
+      ],
+      "id": "a3c6af27-636b-4106-b6a3-d5f5313b22ac",
+      "name": "HTTP Request",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IYe9SkpVSfTUaYpt",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        496,
+        16
+      ],
+      "id": "61bda177-c1d8-44e8-b64d-d9f344539082",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputs = $input.all();\n\nconst sheetsData = inputs[0]?.json;\nconst expenseData = inputs[1]?.json;\n\nif (!sheetsData || !expenseData) {\n  throw new Error('Missing input data: check your inputs order and data format');\n}\n\n// Extract sheet titles, convert all to lowercase\nconst sheetNames = sheetsData.sheets.map(sheet => sheet.properties.title.toLowerCase());\n\n// Convert expense source to lowercase\nconst sourceLower = expenseData.source.toLowerCase();\n\n// Case-insensitive check if source exists in sheet names\nconst isSheetExist = sheetNames.includes(sourceLower);\n\n// Return updated expense object\nreturn {\n  json: {\n    ...expenseData,\n    isSheetExist: isSheetExist,\n    sheetName: expenseData.source.toUpperCase()\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        16
+      ],
+      "id": "f4e30750-ac15-4c00-8194-4ce86b541fad",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4849affc-0bb7-4d6d-a079-3cf676201418",
+              "leftValue": "={{$json[\"isSheetExist\"]}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        912,
+        16
+      ],
+      "id": "511e2e3e-9dbe-4cb3-abc8-a73cd18ab452",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1tEAVuFkmp9zJAoJBaoRts_a_Da1gLzuLrlZv75JLLD8/values/{{ $json.sheetName }}!A1:append?valueInputOption=USER_ENTERED",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "values",
+              "value": "={{ $json[\"values\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1376,
+        160
+      ],
+      "id": "67f6a1af-0ba6-41c2-95fd-d1a7914dd2cc",
+      "name": "HTTP Request1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IYe9SkpVSfTUaYpt",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1tEAVuFkmp9zJAoJBaoRts_a_Da1gLzuLrlZv75JLLD8/values/{{ $json.sheetName }}!A1:append?valueInputOption=USER_ENTERED",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "values",
+              "value": "={{ $json[\"values\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        -208
+      ],
+      "id": "bb5ac559-b98e-435f-bb67-e1c7b3af80d5",
+      "name": "HTTP Request2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IYe9SkpVSfTUaYpt",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\n\n// Keys to exclude\nconst excludeKeys = ['isSheetExist', 'telegram_user_id', 'date', 'sheetName'];\n\n// Check if the sheet already exists\nconst isSheetExist = item.isSheetExist;\n\n// Filter out unwanted keys for headers and data\nconst filteredKeys = Object.keys(item).filter(key => !excludeKeys.includes(key));\nconst headerRow = filteredKeys;\nconst dataRow = filteredKeys.map(key => item[key]);\n\n// Construct values array conditionally\nconst values = isSheetExist\n  ? [dataRow] // Only data row if sheet already exists\n  : [headerRow, dataRow]; // Add headers if sheet is new\n\nreturn [\n  {\n    json: {\n      values: values,\n      isSheetExist: isSheetExist,\n      sheetName: item.sheetName\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        16
+      ],
+      "id": "81867128-cd21-4e00-81b3-54630d19d72a",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1tEAVuFkmp9zJAoJBaoRts_a_Da1gLzuLrlZv75JLLD8:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"requests\": [\n    {\n      \"addSheet\": {\n        \"properties\": {\n          \"title\": \"{{$json[\"sheetName\"]}}\"\n        }\n      }\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        944,
+        272
+      ],
+      "id": "c7196dfa-af53-4853-b2ee-adc42df4ab9d",
+      "name": "HTTP Request3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IYe9SkpVSfTUaYpt",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1248,
+        -208
+      ],
+      "id": "38f5f31c-4fa2-4954-81b1-4e8880b8f2c3",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1168,
+        160
+      ],
+      "id": "0dbe38a7-a285-4984-84b6-7927a8913a62",
+      "name": "Merge2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cb22aefc-a7b7-4bfd-8012-388ac1bb5aae",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a540b3e79515173bf6b929ff06761dfdb9cc323a48c5a6b501d7d9cf1ddc30bf"
+  },
+  "id": "NA6S1jneCpIQdHgC",
+  "tags": []
+}
