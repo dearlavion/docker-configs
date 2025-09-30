@@ -12,8 +12,13 @@ services:
       - N8N_RUNNERS_ENABLED=true
       - WEBHOOK_TUNNEL_URL=https://df9655c9ca86.ngrok-free.app
       - WEBHOOK_URL=https://df9655c9ca86.ngrok-free.app
+      - DB_TYPE=sqlite
+      - DB_SQLITE_DATABASE=/home/node/.n8n/n8n-database.sqlite
     volumes:
-      - n8n_data:/home/node/.n8n2
+      #DB outside the n8n image
+      - /Users/alysson/dev/db:/home/node/.n8n
+      #DB inside the n8n image
+      #n8n_data:/home/node/.n8n2
     restart: unless-stopped
 volumes:
   n8n_data:
