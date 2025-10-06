@@ -15,11 +15,21 @@ services:
       - WEBHOOK_URL=https://df9655c9ca86.ngrok-free.app
       - DB_TYPE=sqlite
       - DB_SQLITE_DATABASE=/home/node/.n8n/n8n-database2.sqlite
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=Password1234
     volumes:
-      #DB outside the n8n image
-      - /Users/alysson/dev/db:/home/node/.n8n
-      #DB inside the n8n image
-      #- n8n_data:/home/node/.n8n2
+      - /Users/alysson/dev/db/sqlite-n8n-db:/home/node/.n8n
+    depends_on:
+      - redis
     restart: unless-stopped
-volumes:
-  n8n_data:
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - /Users/alysson/dev/db/redis-n8n-db:/data
+    command: ["redis-server", "--requirepass", "Password1234"]
+    restart: unless-stopped
