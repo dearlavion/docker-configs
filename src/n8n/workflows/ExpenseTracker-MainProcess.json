@@ -1,40 +1,17 @@
 {
-  "name": "ExpenseTracker",
+  "name": "ExpenseTracker-MainProcess",
   "nodes": [
     {
       "parameters": {
-        "updates": [
-          "message"
-        ],
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-base.telegramTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        0
-      ],
-      "id": "7bca457c-8e3a-4b73-8908-a7d94812f49b",
-      "name": "Telegram Trigger",
-      "webhookId": "5cceacb8-09b4-4c9a-a8d0-7c1f75b2413a",
-      "credentials": {
-        "telegramApi": {
-          "id": "QhjAuIMRnHE08olp",
-          "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const text = $json.message.text;\nconst parts = text.split(',');\n\nif (parts.length !== 3) {\n  throw new Error(\"Invalid input. Format must be: source,description,amount\");\n}\n\nconst unixDate = $json.message.date;\nconst jsDate = new Date(unixDate * 1000); // Telegram date is in seconds\nconst formattedDate = jsDate.toISOString().split(\"T\")[0];\n\nreturn [{\n  source: parts[0].trim(),\n  description: parts[1].trim(),\n  amount: parseFloat(parts[2].trim()),\n  date: formattedDate,\n  timestamp: jsDate.toISOString(),\n  telegram_user_id: $json.message.from.id,\n  username: `${$json.message.from.first_name} ${$json.message.from.last_name || ''}`.trim()\n}];\n"
+        "jsCode": "const raw = items[0].json;\n\nif (!raw.value) {\n  // If Redis returned null (empty list), exit without error\n  return [];\n}\n\nconst data = raw.value;\nconst message = data.message;\n\nif (!message?.text) {\n  throw new Error(\"Message text is missing.\");\n}\n\nconst parts = message.text.split(',');\n\nif (parts.length !== 3) {\n  throw new Error(\"Invalid message format. Expected: source,description,amount\");\n}\n\nconst [source, description, amountStr] = parts.map(p => p.trim());\nconst amount = parseFloat(amountStr);\nconst date = new Date(message.date * 1000);\n\nreturn [{\n  json: {\n    source,\n    description,\n    amount,\n    date: date.toISOString().split(\"T\")[0],\n    timestamp: date.toISOString(),\n    telegram_user_id: message.from.id,\n    username: `${message.from.first_name} ${message.from.last_name || ''}`.trim(),\n    //original_message: data\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        208,
-        0
+        -832,
+        208
       ],
-      "id": "a8dfa3f3-9e4a-49af-b8d1-c59bba4cc89a",
+      "id": "d8000e14-2e2c-4f10-8e59-8b5af4d60c0d",
       "name": "Code in JavaScript"
     },
     {
@@ -47,14 +24,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        352,
-        -96
+        -688,
+        112
       ],
-      "id": "a3c6af27-636b-4106-b6a3-d5f5313b22ac",
+      "id": "7bd6af7c-fec1-4076-85a3-d688df967bc2",
       "name": "HTTP Request",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "IYe9SkpVSfTUaYpt",
+          "id": "ZgF7UNxex6A3ZWqY",
           "name": "Google Sheets account"
         }
       }
@@ -64,10 +41,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        496,
-        16
+        -544,
+        224
       ],
-      "id": "61bda177-c1d8-44e8-b64d-d9f344539082",
+      "id": "011f059b-bdbd-4994-8aba-249cd2877dd2",
       "name": "Merge"
     },
     {
@@ -77,10 +54,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        640,
-        16
+        -400,
+        224
       ],
-      "id": "f4e30750-ac15-4c00-8194-4ce86b541fad",
+      "id": "e7dd1acc-acbc-41cd-b5dd-dd4f09d349cc",
       "name": "Code in JavaScript1"
     },
     {
@@ -111,10 +88,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        912,
-        16
+        -128,
+        224
       ],
-      "id": "511e2e3e-9dbe-4cb3-abc8-a73cd18ab452",
+      "id": "08a8609f-5cc1-4632-a3b7-7f5ba96c7d85",
       "name": "If"
     },
     {
@@ -137,14 +114,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1376,
-        160
+        336,
+        368
       ],
-      "id": "67f6a1af-0ba6-41c2-95fd-d1a7914dd2cc",
+      "id": "f70532e3-c051-4a2f-9dc5-f9c422a884e7",
       "name": "HTTP Request1",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "IYe9SkpVSfTUaYpt",
+          "id": "ZgF7UNxex6A3ZWqY",
           "name": "Google Sheets account"
         }
       }
@@ -169,14 +146,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1040,
-        -208
+        0,
+        0
       ],
-      "id": "bb5ac559-b98e-435f-bb67-e1c7b3af80d5",
+      "id": "5457fd7c-18fa-46f9-aa48-b5b790cee8e4",
       "name": "HTTP Request2",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "IYe9SkpVSfTUaYpt",
+          "id": "ZgF7UNxex6A3ZWqY",
           "name": "Google Sheets account"
         }
       }
@@ -188,10 +165,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        784,
-        16
+        -256,
+        224
       ],
-      "id": "81867128-cd21-4e00-81b3-54630d19d72a",
+      "id": "eb10cc3c-ebe7-4a3b-b9f5-92202d59e5fb",
       "name": "Code in JavaScript2"
     },
     {
@@ -208,14 +185,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        944,
-        272
+        -96,
+        480
       ],
-      "id": "c7196dfa-af53-4853-b2ee-adc42df4ab9d",
+      "id": "99412a9a-446b-4f93-bb37-87f4417169cf",
       "name": "HTTP Request3",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "IYe9SkpVSfTUaYpt",
+          "id": "ZgF7UNxex6A3ZWqY",
           "name": "Google Sheets account"
         }
       }
@@ -225,10 +202,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1248,
-        -208
+        208,
+        0
       ],
-      "id": "38f5f31c-4fa2-4954-81b1-4e8880b8f2c3",
+      "id": "5f49aa7d-e9dc-4d87-95de-eb66ed0bc4f6",
       "name": "Merge1"
     },
     {
@@ -236,26 +213,57 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1168,
-        160
+        128,
+        368
       ],
-      "id": "0dbe38a7-a285-4984-84b6-7927a8913a62",
+      "id": "e6ba08c4-b2ca-4b02-941f-971101dc99ea",
       "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1216,
+        208
+      ],
+      "id": "641af050-ce3a-41e6-98eb-30acf82ccc6f",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "pop",
+        "list": "telegram_queue",
+        "propertyName": "value",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1008,
+        208
+      ],
+      "id": "d3d9ed7d-c9e7-453e-bacc-c09e1a4f2818",
+      "name": "Redis1",
+      "credentials": {
+        "redis": {
+          "id": "PL44tPj1mXlp5gTR",
+          "name": "Redis account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Telegram Trigger": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Code in JavaScript": {
       "main": [
         [
@@ -371,17 +379,39 @@
           }
         ]
       ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "cb22aefc-a7b7-4bfd-8012-388ac1bb5aae",
+  "versionId": "775bbd4c-e989-45e9-84c6-4a98e0e4671a",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "a540b3e79515173bf6b929ff06761dfdb9cc323a48c5a6b501d7d9cf1ddc30bf"
+    "instanceId": "c2de679b918441c11d996af98932d50d588cea9bf608ec617cb3d836b9a91cef"
   },
-  "id": "NA6S1jneCpIQdHgC",
+  "id": "I3musaDYyO2Ask6D",
   "tags": []
 }

@@ -1,0 +1,99 @@
+{
+  "name": "ExpenseTracker-TelegramTrigger",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cc04604b-2990-4a09-85c7-c91e7fc1cf27",
+      "name": "Telegram Trigger",
+      "webhookId": "5cceacb8-09b4-4c9a-a8d0-7c1f75b2413a",
+      "credentials": {
+        "telegramApi": {
+          "id": "RdvxWeJMRKGz61kJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "telegram_queue",
+        "messageData": "={{ JSON.stringify($json) }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "27428e35-b7a7-48c2-ae53-21ef78189b64",
+      "name": "Redis",
+      "credentials": {
+        "redis": {
+          "id": "PL44tPj1mXlp5gTR",
+          "name": "Redis account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 134715211,
+          "message": {
+            "message_id": 46,
+            "from": {
+              "id": 8223467036,
+              "is_bot": false,
+              "first_name": "Dear",
+              "last_name": "Lavion",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 8223467036,
+              "first_name": "Dear",
+              "last_name": "Lavion",
+              "type": "private"
+            },
+            "date": 1759676695,
+            "text": "ew,coffee,140"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c9dc278e-72af-47b8-b6d2-aaa6fdbf07b6",
+  "meta": {
+    "instanceId": "c2de679b918441c11d996af98932d50d588cea9bf608ec617cb3d836b9a91cef"
+  },
+  "id": "Eg1jXlGHUt20OZ1v",
+  "tags": []
+}
