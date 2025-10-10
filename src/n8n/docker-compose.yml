@@ -6,20 +6,21 @@ services:
     ports:
       - "5678:5678"
     environment:
-      - N8N_ENCRYPTION_KEY=a376de25ecf68323ea29a065292e7e8ef19b1a6363c8cb19c4e1971dd623c2f6
-      - GENERIC_TIMEZONE=Asia/Singapore
-      - TZ=Asia/Singapore
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-      - N8N_RUNNERS_ENABLED=true
-      - WEBHOOK_TUNNEL_URL=https://df9655c9ca86.ngrok-free.app
-      - WEBHOOK_URL=https://df9655c9ca86.ngrok-free.app
-      - DB_TYPE=sqlite
-      - DB_SQLITE_DATABASE=/home/node/.n8n/n8n-database2.sqlite
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=Password1234
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - TZ=${TZ}
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS}
+      - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED}
+      - WEBHOOK_TUNNEL_URL=${NGROK}
+      - WEBHOOK_URL=${NGROK}
+      - DB_TYPE=${DB_TYPE}
+      - DB_SQLITE_DATABASE=${DB_SQLITE_DATABASE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - /Users/alysson/dev/db/sqlite-n8n-db:/home/node/.n8n
+      - /Users/alysson/dev/db/sqlite-n8n-expense-tracker-db:/data/expense-tracker
     depends_on:
       - redis
     restart: unless-stopped
@@ -31,5 +32,20 @@ services:
       - "6379:6379"
     volumes:
       - /Users/alysson/dev/db/redis-n8n-db:/data
-    command: ["redis-server", "--requirepass", "Password1234"]
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    restart: unless-stopped
+
+  redis-listener:
+    build:
+      context: ./images/redisExpenseTrackerListener
+      dockerfile: Dockerfile
+    container_name: n8n-redis-listener
+    environment:
+      - NGROK=${NGROK}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+    depends_on:
+      - redis
+      - n8n
     restart: unless-stopped

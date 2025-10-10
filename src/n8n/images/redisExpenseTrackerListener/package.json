@@ -1,0 +1,12 @@
+{
+  "name": "redis-listener",
+  "version": "1.0.0",
+  "main": "redis-listener.js",
+  "scripts": {
+    "start": "node redis-listener.js"
+  },
+  "dependencies": {
+    "axios": "^1.0.0",
+    "redis": "^4.6.0"
+  }
+}

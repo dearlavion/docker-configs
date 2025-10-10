@@ -1,0 +1,5 @@
+"scripts": {
+"start": "docker-compose up -d --build",
+"stop": "docker-compose down",
+"update-ngrok": "./update_ngrok_url_and_rebuild_docker.sh"
+}
